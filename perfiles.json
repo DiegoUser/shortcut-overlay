@@ -1,0 +1,29 @@
+{
+  "_comentario": "Configuración de las teclas G. Se edita a mano y nunca la reescribe la app. El perfil activo NO vive acá: está en perfil-activo.txt, porque eso es estado, no configuración. El campo 'icono' es el código hexadecimal de un glifo de Segoe Fluent Icons. Un 'accion' vacío deja la tecla libre.",
+  "perfiles": [
+    {
+      "id": "general",
+      "nombre": "General",
+      "teclas": {
+        "G1": { "nombre": "Cambiar salida",   "icono": "E8AB", "accion": "toggle-audio-output.ps1" },
+        "G2": { "nombre": "VS Code aquí",     "icono": "E943", "accion": "open-vscode-here.ps1" },
+        "G3": { "nombre": "OpenClaw",         "icono": "E945", "accion": "start-openclaw-gateway.ps1" },
+        "G4": { "nombre": "Terminal aquí",    "icono": "E756", "accion": "open-terminal-here.ps1" },
+        "G5": { "nombre": "LocalDrop",        "icono": "E72D", "accion": "start-localdrop.ps1" },
+        "G6": { "nombre": "Arreglar monitor", "icono": "E90F", "accion": "fix-display.ps1" }
+      }
+    },
+    {
+      "id": "notas",
+      "nombre": "Notas",
+      "teclas": {
+        "G1": { "nombre": "Nota diaria",      "icono": "E787", "accion": "open-daily-note.ps1" },
+        "G2": { "nombre": "",                 "icono": "E710", "accion": "" },
+        "G3": { "nombre": "",                 "icono": "E710", "accion": "" },
+        "G4": { "nombre": "",                 "icono": "E710", "accion": "" },
+        "G5": { "nombre": "",                 "icono": "E710", "accion": "" },
+        "G6": { "nombre": "",                 "icono": "E710", "accion": "" }
+      }
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+<Window x:Class="Atajos.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Atajos"
+        SizeToContent="WidthAndHeight"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Focusable="False"
+        Visibility="Hidden"
+        WindowStartupLocation="Manual">
+
+    <Window.Resources>
+        <!-- Segoe Fluent Icons ships with Windows 11. Falls back to Segoe MDL2 Assets on Windows 10. -->
+        <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+        <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+
+        <DataTemplate x:Key="KeyTemplate">
+            <Border Width="96" Height="86" Margin="4" CornerRadius="8"
+                    BorderThickness="1"
+                    MouseLeftButtonUp="OnKeyCellClick">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Slot}"
+                               FontFamily="Segoe UI Variable Display, Segoe UI"
+                               FontSize="11" FontWeight="Bold"
+                               Foreground="#99FFFFFF" HorizontalAlignment="Center" />
+
+                    <TextBlock Text="{Binding Icon}"
+                               FontFamily="{StaticResource IconFont}"
+                               FontSize="24" Foreground="#FFFFFFFF"
+                               HorizontalAlignment="Center" Margin="0,6,0,6" />
+
+                    <TextBlock Text="{Binding Name}"
+                               FontFamily="{StaticResource UiFont}"
+                               FontSize="11" Foreground="#F2FFFFFF"
+                               HorizontalAlignment="Center" TextAlignment="Center"
+                               TextWrapping="Wrap" MaxWidth="84" />
+                </StackPanel>
+
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#1AFFFFFF" />
+                        <Setter Property="BorderBrush" Value="#26FFFFFF" />
+                        <Setter Property="Cursor" Value="Hand" />
+
+                        <Style.Triggers>
+                            <!-- A clickable thing has to look clickable, or nobody clicks it. -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#38FFFFFF" />
+                                <Setter Property="BorderBrush" Value="#66FFFFFF" />
+                            </Trigger>
+
+                            <!-- Listed last so it wins: an unassigned cell is not a target. -->
+                            <DataTrigger Binding="{Binding IsFree}" Value="True">
+                                <Setter Property="Opacity" Value="0.35" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                                <Setter Property="Background" Value="#1AFFFFFF" />
+                                <Setter Property="BorderBrush" Value="#26FFFFFF" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Border CornerRadius="12"
+            Background="#D9101014"
+            BorderBrush="#33FFFFFF"
+            BorderThickness="1"
+            Padding="10">
+        <Grid>
+
+            <!-- Normal state: the six keys of the active profile. -->
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasError}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+
+                <ItemsControl ItemsSource="{Binding ActiveProfile.Keys}"
+                              ItemTemplate="{StaticResource KeyTemplate}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="2" Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                    <TextBlock FontFamily="{StaticResource UiFont}" FontSize="11"
+                               Foreground="#8CFFFFFF" Text="Perfil: " />
+                    <TextBlock FontFamily="{StaticResource UiFont}" FontSize="11"
+                               FontWeight="SemiBold" Foreground="#D9FFFFFF"
+                               Text="{Binding ActiveProfile.Name}" />
+
+                    <!-- The hint is hidden when there is nothing to cycle to. -->
+                    <TextBlock FontFamily="{StaticResource UiFont}" FontSize="11"
+                               Foreground="#59FFFFFF" Text="  ·  Espacio para cambiar">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanCycle}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Failure state. A blank panel would read as a bug in the overlay; this says
+                 which file is broken and why. -->
+            <StackPanel MaxWidth="320" VerticalAlignment="Center">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasError}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+
+                <TextBlock FontFamily="{StaticResource IconFont}" FontSize="22"
+                           Foreground="#FFD08A" HorizontalAlignment="Center"
+                           Text="&#xE7BA;" Margin="0,4,0,8" />
+                <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12"
+                           Foreground="#F2FFFFFF" TextWrapping="Wrap"
+                           TextAlignment="Center" Text="{Binding LoadError}" />
+            </StackPanel>
+
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+
+    <!-- Only for NotifyIcon: WPF still has no tray icon of its own, and this avoids taking a
+         third-party dependency for twenty lines of code. -->
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <ApplicationIcon>atajos.ico</ApplicationIcon>
+    <AssemblyTitle>Atajos</AssemblyTitle>
+    <Product>Atajos</Product>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <!-- Enabling WinForms for one tray icon would otherwise drop System.Windows.Forms and
+       System.Drawing into every file, where they collide with WPF over Application,
+       MessageBox, Point, Size, Color and more. TrayIcon.cs imports what it needs. -->
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <!-- The config and the action scripts ship next to the executable. That is what makes the
+       output folder self-contained: copy it anywhere and the shortcuts work. -->
+  <ItemGroup>
+    <Content Include="perfiles.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="actions\**\*" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- The manual travels with the folder. Someone who gets a copy on another machine has
+         no repository to read it from. -->
+    <Content Include="MANUAL.md" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Also as a loose file, not just embedded in the exe: NotifyIcon needs to pick the
+         exact tray size out of the .ico rather than rescale whatever it finds. -->
+    <Content Include="atajos.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

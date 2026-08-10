@@ -1,0 +1,14 @@
+# Build output
+bin/
+obj/
+
+# Runtime state and logs: written by the app, not by a person.
+perfil-activo.txt
+atajos.log
+atajos.log.1
+
+# Editor and OS noise
+.vs/
+*.user
+Thumbs.db
+desktop.ini
