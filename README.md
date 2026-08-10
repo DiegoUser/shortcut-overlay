@@ -2,7 +2,7 @@
 
 Overlay always-on-top que muestra qué hace cada atajo, para no tener que acordarse. Se abre sosteniendo `Ctrl+Shift`, se ejecuta con un número, y soporta varios perfiles.
 
-> **Estado: funcionando.** El panel abre, ejecuta acciones y cicla perfiles. Falta empaquetar self-contained, arranque automático e icono de bandeja.
+> **Estado: instalado y en uso (testing 1).** Corre desde `%LOCALAPPDATA%\Atajos`, arranca con Windows, vive en la bandeja. Falta el empaquetado self-contained para la laptop (testing 2).
 
 > Este documento es la bitácora técnica: qué se decidió, por qué, y qué falta. **Para usar el programa, ver [MANUAL.md](MANUAL.md).**
 
@@ -253,6 +253,8 @@ Descartados: Electron (100 MB para dibujar seis cuadrados), WinForms (peor trans
 | Robo de foco | La ventana necesita `WS_EX_NOACTIVATE`. Sin eso, mostrar el overlay te saca el cursor de donde estabas escribiendo. |
 | Clics | **Sin** `WS_EX_TRANSPARENT`: las casillas son clickeables. Ver más abajo. |
 | Juegos | En **fullscreen exclusivo** ningún overlay se ve, y no tiene arreglo desde la app. En borderless windowed funciona bien. Asumir esa limitación. |
+| Anti-cheat y pruebas automatizadas | Con el cliente de League of Legends en primer plano, **la entrada sintética deja de disparar atajos globales**. Verificado con un atajo propio, ajeno a Atajos: `keybd_event` no produce `WM_HOTKEY`. El sondeo de `GetAsyncKeyState` sigue funcionando, así que el panel abre pero las teclas no responden a input inyectado. Consecuencia práctica: **las pruebas automatizadas de las casillas no valen nada mientras el juego esté abierto**; hay que probarlas a mano. |
+| Posición del panel | Con `SetWindowPos` en píxeles físicos, no con `Window.Left/Top`. Las unidades lógicas de WPF están escaladas por el DPI de un monitor, así que en un setup con escalas distintas dejan la ventana en el lugar equivocado. Se posiciona dos veces: mover a un monitor con otra escala provoca un re-layout y el tamaño medido antes queda viejo. |
 | Hotkeys y UAC | `RegisterHotKey` no recibe la tecla si la ventana en foco corre elevada y el overlay no. Si pasa seguido, elevar el overlay vía Programador de tareas. |
 | DPI | WPF sobre .NET Core ya es PerMonitorV2 por defecto; no hizo falta `app.manifest`. |
 | Iconos | Fuente **Segoe Fluent Icons** en vez de archivos de imagen. Cambiar un icono es editar un string. |
@@ -271,23 +273,26 @@ Descartados: Electron (100 MB para dibujar seis cuadrados), WinForms (peor trans
 
 ## Pendiente
 
-1. **Publicar self-contained** (`dotnet publish -r win-x64 --self-contained -p:PublishSingleFile=true`) y probar la carpeta en la laptop. Las rutas ya no dependen de la máquina; falta el paso de empaquetado y la prueba real.
-2. Arranque automático (acceso directo en `shell:startup`) e icono en la bandeja para salir.
-3. **Limpieza de `C:\Scripts`.** Ver abajo.
-4. Dos acciones no van a funcionar en la laptop y van a quedar registradas en `atajos.log`: `start-localdrop.ps1` (necesita `PublicarLocalDrop` en el Escritorio) y `start-openclaw-gateway.ps1` (necesita `openclaw` instalado). Falta decidir si se resuelven con un perfil propio de esa máquina o si alcanza con que fallen y lo digan.
-5. `open-terminal-here.ps1` abre `cmd`. Windows Terminal está instalado (`wt.exe`) y sería una mejora, pero es una preferencia, no un defecto. Cambiarlo es una línea.
+### Testing 1 (uso diario en la PC principal)
 
-## Limpieza de C:\Scripts (pendiente)
+1. **Probar físicamente `Ctrl+Shift` + un número.** Es lo único de esta tanda que no se pudo verificar: con el juego abierto la entrada sintética no dispara atajos globales (ver trampas técnicas).
+2. Sacar el icono de la bandeja del área desbordada: Windows 11 esconde los iconos nuevos detrás del chevron.
 
-`C:\Scripts` quedó con tres generaciones encima. Nada de esto lo usa la app.
+### Testing 2 (laptop)
 
-| Qué | Estado |
-|-----|--------|
-| `ScriptG*.{bat,vbs,ps1}` | **Los usa iCUE hoy.** No tocar hasta desasignar las teclas G. |
-| `keys\`, `run-key.vbs`, `dispatcher.ps1`, `dispatcher.log` | Muertos. Fueron el intento vía iCUE. |
-| `actions\`, `perfiles.json`, `perfil-activo.txt` | Duplicados: la versión buena vive en el proyecto. |
+3. `.\deploy.ps1 -SelfContained` y copiar `%LOCALAPPDATA%\Atajos` a la laptop.
+4. Dos acciones no van a funcionar allá y van a quedar registradas en `atajos.log`: `start-localdrop.ps1` (necesita `PublicarLocalDrop` en el Escritorio) y `start-openclaw-gateway.ps1` (necesita `openclaw` instalado). Falta decidir si se resuelven con un perfil propio de esa máquina o si alcanza con que fallen y lo digan.
 
-> **Cuidado con los duplicados:** hay un `perfiles.json` en `C:\Scripts` y otro en el proyecto. Editar el equivocado no da error, simplemente no hace nada. Conviene borrar el de `C:\Scripts` pronto.
+### Cuando moleste
+
+5. Que la casilla del audio muestre hacia dónde va a cambiar, en vez de un nombre fijo. Requiere que la app consulte el dispositivo actual al abrir el panel.
+6. El diálogo de LocalDrop roba el foco. Va contra el objetivo de invisibilidad.
+7. `open-terminal-here.ps1` abre `cmd`. Windows Terminal está instalado (`wt.exe`) y sería una mejora, pero es una preferencia, no un defecto. Cambiarlo es una línea.
+8. Posición del panel configurable en vez de fija abajo a la izquierda.
+
+### Limpieza de C:\Scripts
+
+Sólo quedan los `ScriptG*.{bat,vbs,ps1}`, y **los usa iCUE hoy**. Se borran cuando desasignes las teclas G. La app no lee nada de esa carpeta.
 
 ## Portabilidad
 
@@ -303,14 +308,43 @@ Atajos\
 
 Sin instalador, sin permisos de administrador, sin iCUE, sin AutoHotkey. Un acceso directo en `shell:startup` y listo. Nada de esto depende de tener teclas G, que es justamente lo que lo hace portable.
 
-## Cómo correrlo
+## Instalación y despliegue
+
+```
+.\deploy.ps1
+```
+
+Publica, cierra la instancia en ejecución, instala en `%LOCALAPPDATA%\Atajos`, crea el acceso directo de arranque automático y la vuelve a levantar.
+
+| Opción | Para qué |
+|--------|----------|
+| `-SelfContained` | Empaqueta el runtime de .NET. Necesario para una máquina sin él. |
+| `-NoStart` | Instala sin levantar la app |
+| `-NoAutostart` | No crea el acceso directo en `shell:startup` |
+
+**La app instalada y la carpeta de compilación tienen que estar separadas.** Mientras la app corre su `.exe` está bloqueado, así que cada `dotnet build` falla, y un `dotnet clean` te borraría la app en uso. Nos pasó cuatro veces antes de separarlas.
+
+El despliegue **nunca pisa** `perfiles.json`, `perfil-activo.txt` ni los logs. Perder un `perfiles.json` editado por una instalación sería el bug más molesto posible en este proyecto.
+
+Para desarrollar sin tocar la instalada:
 
 ```
 dotnet build
 bin\Debug\net10.0-windows\Atajos.exe
 ```
 
-Arranca oculto. Sostené `Ctrl+Shift` para verlo.
+Ojo: las dos instancias no pueden convivir, hay guarda de instancia única.
+
+## Robustez
+
+| Tema | Cómo está resuelto |
+|------|--------------------|
+| Instancia única | Mutex `Local\Atajos.SingleInstance`. La segunda instancia sale en silencio, que es lo correcto cuando el acceso directo de arranque dispara con la app ya abierta. |
+| Excepción en el hilo de UI | Se registra y se traga. Un utilitario de fondo que desaparece sin decir nada es peor que uno que se pierde una tecla: los atajos dejarían de andar sin explicación. Avisa con un globo desde la bandeja. |
+| Excepción fatal en otro hilo | Se registra. No hay nada que recuperar, pero es la diferencia entre una pista y un misterio. |
+| Registro de atajos fallido | Se anota en `atajos.log` con el código de error. Sin eso, un atajo que otra app ya tomó produce un panel cuyas teclas no hacen nada, indistinguible de una acción rota. |
+| Tamaño del log | Rota a `atajos.log.1` pasados 256 KB. |
+| Icono de bandeja | Es la única prueba visible de que la app está viva. Permite salir y abrir la carpeta de configuración y el registro. |
 
 ## Contexto relacionado
 

@@ -16,6 +16,8 @@ Sirve para eso y nada más: dejar de olvidarte de los atajos que configuraste.
 
 Eso es todo.
 
+Atajos arranca solo con Windows y vive en la bandeja del sistema, al lado del reloj. Desde ahí lo cerrás y abrís su carpeta de configuración.
+
 | Mientras sostenés `Ctrl+Shift` | |
 |-------------------------------|---|
 | `1` a `6` | Ejecuta esa casilla |
@@ -68,6 +70,16 @@ Depende del perfil que tengas activo. El nombre del perfil se ve abajo del panel
 Las casillas que se ven **grises y apagadas** están libres. No hacen nada, y no es un error.
 
 ---
+
+## Dónde vive todo
+
+La app está instalada en:
+
+```
+C:\Users\<tu usuario>\AppData\Local\Atajos
+```
+
+El camino corto para llegar: clic derecho en el icono de la bandeja → **Abrir carpeta de configuración**.
 
 ## Cambiar qué hace una casilla
 
@@ -241,20 +253,21 @@ Alejá el puntero del panel. Se mantiene abierto a propósito mientras el mouse 
 
 ### Quiero cerrarlo
 
-`Ctrl` + `Alt` + `Q`.
+Clic derecho en el icono de la bandeja y **Salir**. O `Ctrl` + `Alt` + `Q`.
 
-El panel no tiene botón de cerrar. Si el atajo no responde, cerrá `Atajos.exe` desde el Administrador de tareas.
+### No encuentro el icono de la bandeja
+
+Windows 11 esconde los iconos nuevos. Hacé clic en la flecha `^` al lado del reloj y ahí va a estar.
+
+Para tenerlo siempre a la vista, arrastralo desde ese panelcito hasta la barra de tareas. Windows se acuerda.
 
 ---
 
-## Que arranque solo con Windows
+## Arranque automático
 
-1. Apretá `Win` + `R`, escribí `shell:startup` y aceptá. Se abre una carpeta.
-2. Arrastrá `Atajos.exe` ahí adentro **con el botón derecho** y elegí *Crear iconos de acceso directo*.
+Ya está configurado: hay un acceso directo en la carpeta de inicio de Windows.
 
-Listo. La próxima vez que prendas la PC, Atajos ya va a estar esperando.
-
-Para que deje de arrancar solo, borrá ese acceso directo.
+Para que **deje** de arrancar solo: `Win` + `R`, escribí `shell:startup`, aceptá, y borrá el acceso directo `Atajos` que está ahí.
 
 ---
 
@@ -280,3 +293,6 @@ Dos avisos:
 | `actions\` | Los scripts que se ejecutan | Sí, para agregar acciones |
 | `perfil-activo.txt` | Recuerda en qué perfil estabas | No, se maneja solo |
 | `atajos.log` | Anotaciones de lo que falló | Se puede borrar cuando quieras |
+| `atajos.log.1` | El registro anterior, cuando el actual creció mucho | Se puede borrar cuando quieras |
+| `atajos.ico` | El icono | No |
+| `MANUAL.md` | Este archivo | — |
