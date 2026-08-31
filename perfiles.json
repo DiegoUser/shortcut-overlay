@@ -18,7 +18,7 @@
       "nombre": "Notas",
       "teclas": {
         "G1": { "nombre": "Nota diaria",      "icono": "E787", "accion": "open-daily-note.ps1" },
-        "G2": { "nombre": "",                 "icono": "E710", "accion": "" },
+        "G2": { "nombre": "Recordá",          "icono": "EC92", "accion": "show-recorda.ps1" },
         "G3": { "nombre": "",                 "icono": "E710", "accion": "" },
         "G4": { "nombre": "",                 "icono": "E710", "accion": "" },
         "G5": { "nombre": "",                 "icono": "E710", "accion": "" },
