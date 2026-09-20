@@ -15,6 +15,13 @@ namespace Atajos;
 public static class ActionRunner
 {
     /// <summary>
+    /// Raised on a background thread once an action's process has exited. The overlay uses it
+    /// to re-read the state a key reports, since an action that changes something is exactly
+    /// the moment the line describing it goes stale.
+    /// </summary>
+    public static event Action? ActionFinished;
+
+    /// <summary>
     /// Runs a binding's action. Does nothing for an unassigned key, which is a normal state
     /// rather than an error.
     /// </summary>
@@ -71,6 +78,11 @@ public static class ActionRunner
         info.ArgumentList.Add("-Script");
         info.ArgumentList.Add(path);
 
+        // Whatever the key declares in "opciones", in order, forwarded to the script as
+        // positional arguments. A script that takes none simply gets none. This is what keeps
+        // a toggle's two device names written down once instead of once here and once there.
+        foreach (string option in binding.Options) info.ArgumentList.Add(option);
+
         Process process = new() { StartInfo = info, EnableRaisingEvents = true };
         List<string> errors = [];
 
@@ -91,6 +103,10 @@ public static class ActionRunner
             }
 
             process.Dispose();
+
+            // After Dispose, so a slow subscriber cannot hold on to the process object. It
+            // fires even when the action failed: a partial change still leaves the panel wrong.
+            ActionFinished?.Invoke();
         };
 
         process.Start();

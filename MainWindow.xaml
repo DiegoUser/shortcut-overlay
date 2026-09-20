@@ -19,7 +19,7 @@
         <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI</FontFamily>
 
         <DataTemplate x:Key="KeyTemplate">
-            <Border Width="96" Height="86" Margin="4" CornerRadius="8"
+            <Border Width="96" Height="100" Margin="4" CornerRadius="8"
                     BorderThickness="1"
                     MouseLeftButtonUp="OnKeyCellClick">
                 <StackPanel VerticalAlignment="Center">
@@ -38,6 +38,27 @@
                                FontSize="11" Foreground="#F2FFFFFF"
                                HorizontalAlignment="Center" TextAlignment="Center"
                                TextWrapping="Wrap" MaxWidth="84" />
+
+                    <!-- Live state, for the keys that report any. Dimmer and smaller than the
+                         name on purpose: the name says what the key does and never changes,
+                         this says what it would do right now. -->
+                    <TextBlock Text="{Binding Status}"
+                               FontFamily="{StaticResource UiFont}"
+                               FontSize="9" Foreground="#8CFFFFFF"
+                               HorizontalAlignment="Center" TextAlignment="Center"
+                               TextTrimming="CharacterEllipsis" MaxWidth="90"
+                               Margin="0,3,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasStatus}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
                 <Border.Style>

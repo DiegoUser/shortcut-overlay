@@ -83,6 +83,23 @@ public partial class MainWindow : Window
         _holdTimer = new DispatcherTimer(DispatcherPriority.Input) { Interval = PollInterval };
         _holdTimer.Tick += OnPollHoldState;
         _holdTimer.Start();
+
+        ActionRunner.ActionFinished += OnActionFinished;
+    }
+
+    /// <summary>
+    /// Re-reads what the keys report once an action has run. Only meaningful while the panel is
+    /// still on screen, which happens whenever a cell is clicked and the pointer stays on it —
+    /// the case where a stale line would be sitting right under the cursor.
+    /// </summary>
+    private void OnActionFinished()
+    {
+        if (!_isShown) return;
+
+        Dispatcher.InvokeAsync(() =>
+        {
+            if (_isShown) _store.RefreshStatus();
+        });
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -113,6 +130,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _holdTimer.Stop();
+        ActionRunner.ActionFinished -= OnActionFinished;
 
         if (_handle != IntPtr.Zero)
         {

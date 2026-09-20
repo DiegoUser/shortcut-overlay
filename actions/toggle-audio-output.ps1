@@ -11,9 +11,21 @@
 # but has been stable since Windows 7 and is what every tool in this space uses. Nothing needs
 # to be installed.
 
-# Matched against the device name, case-insensitive. Partial text is enough.
-$deviceA = 'Realtek'
-$deviceB = 'HyperX'
+# The two devices come from the key's "opciones" in perfiles.json, so they are written down
+# once and the overlay can show the same pair it is about to switch between. Matched against
+# the device name, case-insensitive; partial text is enough.
+#
+# Not marked Mandatory on purpose: this runs with stdin redirected and no console, so a
+# mandatory parameter would leave PowerShell waiting on a prompt nobody can see. Better to
+# fail immediately with a line that says what is missing.
+param(
+    [string]$DeviceA,
+    [string]$DeviceB
+)
+
+if (-not $DeviceA -or -not $DeviceB) {
+    throw "This action needs two device names in 'opciones' in perfiles.json, for example [""Realtek"", ""HyperX""]."
+}
 
 Add-Type @'
 using System;
@@ -184,22 +196,23 @@ function Find-Device($fragment) {
     $devices | Where-Object { $_.Name -like "*$fragment*" } | Select-Object -First 1
 }
 
-$a = Find-Device $deviceA
-$b = Find-Device $deviceB
+$a = Find-Device $DeviceA
+$b = Find-Device $DeviceB
 
 if (-not $a -and -not $b) {
-    throw "Neither '$deviceA' nor '$deviceB' is available. Active outputs: " + (($devices | ForEach-Object { $_.Name }) -join '; ')
+    throw "Neither '$DeviceA' nor '$DeviceB' is available. Active outputs: " + (($devices | ForEach-Object { $_.Name }) -join '; ')
 }
 
 # Anything other than A goes to A, so a third device that sneaks in as default still lands
-# somewhere predictable instead of doing nothing.
-if ($current -and $current.Name -like "*$deviceA*") {
+# somewhere predictable instead of doing nothing. KeyStatus.cs mirrors this rule to draw the
+# arrow in the panel; changing the direction here means changing it there too.
+if ($current -and $current.Name -like "*$DeviceA*") {
     $target = $b
-    $missing = $deviceB
+    $missing = $DeviceB
 }
 else {
     $target = $a
-    $missing = $deviceA
+    $missing = $DeviceA
 }
 
 if (-not $target) {

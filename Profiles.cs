@@ -9,8 +9,18 @@ using System.Text.Json.Serialization;
 namespace Atajos;
 
 /// <summary>One G key inside a profile, as the overlay draws it.</summary>
-public sealed class KeyBinding(string key, string slot, string name, string icon, string action)
+public sealed class KeyBinding(
+    string key,
+    string slot,
+    string name,
+    string icon,
+    string action,
+    IReadOnlyList<string> options,
+    string statusKind)
+    : INotifyPropertyChanged
 {
+    private string? _status;
+
     /// <summary>Config key: G1..G6.</summary>
     public string Key { get; } = key;
 
@@ -30,7 +40,38 @@ public sealed class KeyBinding(string key, string slot, string name, string icon
     /// <summary>Action script the dispatcher will run. Empty means the key is unassigned.</summary>
     public string Action { get; } = action;
 
+    /// <summary>
+    /// Arguments handed to the action script, in order. They are also what a status provider
+    /// reads, so a key that toggles between two things names them once and both the running
+    /// and the describing use that same list.
+    /// </summary>
+    public IReadOnlyList<string> Options { get; } = options;
+
+    /// <summary>Which <see cref="KeyStatus"/> provider draws the live line. Empty means none.</summary>
+    public string StatusKind { get; } = statusKind;
+
+    /// <summary>
+    /// The live line under the name, refreshed every time the panel is shown. Null when the
+    /// key declares no provider, or when reading the state failed.
+    /// </summary>
+    public string? Status
+    {
+        get => _status;
+        set
+        {
+            if (_status == value) return;
+
+            _status = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Status)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasStatus)));
+        }
+    }
+
+    public bool HasStatus => !string.IsNullOrWhiteSpace(Status);
+
     public bool IsFree => string.IsNullOrWhiteSpace(Action);
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 }
 
 public sealed class Profile(string id, string name, IReadOnlyList<KeyBinding> keys)
@@ -108,6 +149,7 @@ public sealed class ProfileStore : INotifyPropertyChanged
         }
 
         _activeIndex = ResolveActiveIndex(previousId);
+        RefreshStatus();
         RaiseAllChanged();
     }
 
@@ -117,7 +159,21 @@ public sealed class ProfileStore : INotifyPropertyChanged
 
         _activeIndex = (_activeIndex + 1) % _profiles.Count;
         WriteActiveProfile(_profiles[_activeIndex].Id);
+        RefreshStatus();
         RaiseAllChanged();
+    }
+
+    /// <summary>
+    /// Re-reads the live line of every key in the active profile. Called when the panel opens
+    /// and again once an action finishes, so a key that changes the very state it reports
+    /// shows the new one without the panel having to be reopened.
+    /// </summary>
+    public void RefreshStatus()
+    {
+        foreach (KeyBinding key in ActiveProfile?.Keys ?? [])
+        {
+            key.Status = KeyStatus.Describe(key.StatusKind, key.Options);
+        }
     }
 
     private static List<Profile> ReadProfiles()
@@ -158,7 +214,9 @@ public sealed class ProfileStore : INotifyPropertyChanged
                 (i + 1).ToString(CultureInfo.InvariantCulture),
                 string.IsNullOrWhiteSpace(dto?.Nombre) ? "Libre" : dto.Nombre,
                 DecodeIcon(dto?.Icono),
-                dto?.Accion ?? ""));
+                dto?.Accion ?? "",
+                dto?.Opciones ?? [],
+                dto?.Estado ?? ""));
         }
 
         return keys;
@@ -250,5 +308,7 @@ public sealed class ProfileStore : INotifyPropertyChanged
         [JsonPropertyName("nombre")] public string? Nombre { get; set; }
         [JsonPropertyName("icono")] public string? Icono { get; set; }
         [JsonPropertyName("accion")] public string? Accion { get; set; }
+        [JsonPropertyName("opciones")] public List<string>? Opciones { get; set; }
+        [JsonPropertyName("estado")] public string? Estado { get; set; }
     }
 }

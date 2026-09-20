@@ -66,6 +66,7 @@ Depende del perfil que tengas activo. El nombre del perfil se ve abajo del panel
 | | Qué hace |
 |---|---|
 | **1** | Abre la nota diaria de hoy en Obsidian |
+| **2** | Trae Recordá al frente, o lo manda de vuelta a la bandeja si ya estaba adelante |
 
 Las casillas que se ven **grises y apagadas** están libres. No hacen nada, y no es un error.
 
@@ -97,6 +98,8 @@ Cada casilla se ve así:
 | `nombre` | El texto que se ve en el panel. Ponele lo que te sirva a vos. |
 | `icono` | El dibujito. Es un código, ver más abajo. |
 | `accion` | Qué archivo se ejecuta. Tiene que estar en la carpeta `actions`. |
+| `opciones` | Opcional. Datos que necesita esa acción. La mayoría no necesita ninguno. |
+| `estado` | Opcional. Hace que la casilla muestre una línea chiquita con lo que está pasando ahora mismo. |
 
 ### Ejemplo: intercambiar dos casillas
 
@@ -114,6 +117,31 @@ Vaciá el campo `accion`:
 ```json
 "G3": { "nombre": "", "icono": "E710", "accion": "" }
 ```
+
+### La casilla de cambiar salida de audio
+
+Esa casilla, además de hacer algo, te cuenta cómo está la cosa. Debajo del
+nombre muestra por dónde está sonando el audio ahora y a dónde va a saltar si la apretás:
+
+```
+Cambiar salida
+HyperX → Realtek
+```
+
+Los dos dispositivos salen de `opciones`:
+
+```json
+"G1": { "nombre": "Cambiar salida", "icono": "E8AB", "accion": "toggle-audio-output.ps1",
+        "opciones": ["Realtek", "HyperX"], "estado": "salida-audio" }
+```
+
+Alcanza con un pedacito del nombre y no importan mayúsculas ni minúsculas: `HyperX` encuentra
+`Auriculares (HyperX Cloud III)`. Si cambiás de auriculares, cambiás esa palabra ahí y listo —
+tanto lo que muestra el panel como lo que hace la tecla salen de esa misma línea, así que no
+se pueden desincronizar.
+
+Si escribís el nombre de un dispositivo que no está enchufado, la tecla no hace nada y el
+motivo queda anotado en `atajos.log`.
 
 ### Que los cambios se apliquen
 

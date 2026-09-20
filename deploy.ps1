@@ -1,4 +1,12 @@
-﻿# Publishes Atajos and installs it into its own folder, away from bin\Debug.
+# Publishes Atajos and installs it into its own folder, away from bin\Debug.
+#
+# The install directory is a hardcoded path outside %LOCALAPPDATA% on purpose. When this
+# script is run from a shell hosted inside an MSIX package (a Claude Code session is one),
+# Windows silently redirects %LOCALAPPDATA% into that package's private storage at
+# ...\Packages\<package>\LocalCache\Local. The deploy then appears to succeed, and reads
+# back correctly from inside the same container, but the files do not exist for any process
+# outside it, and Windows discards that storage on package update or reset. Using a path
+# that is never virtualized removes the whole failure mode.
 #
 # Development and daily use must not share a directory. While the app is running its .exe is
 # locked, so every rebuild fails, and a dotnet clean would delete the app being used.
@@ -18,8 +26,43 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Warn if this shell's %LOCALAPPDATA% is redirected into an MSIX package.
+#
+# A shell hosted inside a package container (a Claude Code session is one) has its
+# %LOCALAPPDATA% writes redirected to ...\Packages\<package>\LocalCache\Local. Files written
+# there read back correctly from inside the same container but do not exist for any process
+# outside it, and Windows discards that storage on package update or reset.
+#
+# Two tests that look right are useless here. Comparing the path string fails because
+# %LOCALAPPDATA% still reads as the real path. Calling GetCurrentPackageFullName fails
+# because the redirection can come from the silo rather than from token package identity,
+# so the process reports no package. Only writing a probe and looking for it works.
+$probeName = "atajos-deploy-probe-$PID-$([Guid]::NewGuid().ToString('N').Substring(0, 8)).tmp"
+$probePath = Join-Path $env:LOCALAPPDATA $probeName
+$redirectedInto = $null
+try {
+    Set-Content -LiteralPath $probePath -Value 'probe' -ErrorAction Stop
+    $packagesRoot = Join-Path $env:USERPROFILE 'AppData\Local\Packages'
+    if (Test-Path -LiteralPath $packagesRoot) {
+        $redirectedInto = Get-ChildItem -LiteralPath $packagesRoot -Directory -ErrorAction SilentlyContinue |
+            ForEach-Object { Join-Path $_.FullName "LocalCache\Local\$probeName" } |
+            Where-Object { Test-Path -LiteralPath $_ } |
+            Select-Object -First 1
+    }
+}
+finally {
+    Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
+}
+
+if ($redirectedInto) {
+    Write-Warning "This shell's %LOCALAPPDATA% is redirected into a package container."
+    Write-Warning "  probe surfaced at: $redirectedInto"
+    Write-Warning "The install path below is hardcoded outside %LOCALAPPDATA%, so this deploy is safe,"
+    Write-Warning "but do not reintroduce %LOCALAPPDATA% here or the install will land in package storage."
+}
+
 $projectDir  = $PSScriptRoot
-$installDir  = Join-Path $env:LOCALAPPDATA 'Atajos'
+$installDir  = 'C:\Scripts\Atajos'
 $publishDir  = Join-Path $projectDir 'bin\Publish'
 $startupLink = Join-Path ([Environment]::GetFolderPath('Startup')) 'Atajos.lnk'
 $exePath     = Join-Path $installDir 'Atajos.exe'

@@ -10,13 +10,19 @@
 
 param(
     [Parameter(Mandatory)]
-    [string]$Script
+    [string]$Script,
+
+    # Whatever the key declared in "opciones", forwarded untouched and in order. Most actions
+    # take none. Collected here rather than named so this wrapper never has to know what any
+    # particular action expects.
+    [Parameter(ValueFromRemainingArguments)]
+    [string[]]$ScriptArgs = @()
 )
 
 $ErrorActionPreference = 'Stop'
 
 try {
-    & $Script
+    & $Script @ScriptArgs
 }
 catch {
     # Bytes straight to the handle on purpose. Windows PowerShell writes its streams in the

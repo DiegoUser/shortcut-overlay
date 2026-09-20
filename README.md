@@ -105,8 +105,8 @@ Las rutas se resuelven desde `AppContext.BaseDirectory` (ver `AppPaths.cs`). No 
 
 ```
 Atajos.exe
-  -> powershell -NoProfile -ExecutionPolicy Bypass -File actions\_lib\run-action.ps1 -Script <accion>
-       -> & <accion>
+  -> powershell -NoProfile -ExecutionPolicy Bypass -File actions\_lib\run-action.ps1 -Script <accion> <opciones...>
+       -> & <accion> <opciones...>
        -> si tira error: escribe el mensaje en stderr como UTF-8 y sale con 1
   -> la app lee stderr y lo registra en atajos.log
 ```
@@ -126,7 +126,8 @@ El envoltorio existe para que los scripts no tengan que ocuparse cada uno de reg
       "id": "general",
       "nombre": "General",
       "teclas": {
-        "G1": { "nombre": "Altavoces", "icono": "E767", "accion": "open-volume-mixer.ps1" },
+        "G1": { "nombre": "Cambiar salida", "icono": "E8AB", "accion": "toggle-audio-output.ps1",
+                "opciones": ["Realtek", "HyperX"], "estado": "salida-audio" },
         "G4": { "nombre": "Terminal aqui", "icono": "E756", "accion": "open-terminal-here.ps1" }
       }
     }
@@ -137,6 +138,8 @@ El envoltorio existe para que los scripts no tengan que ocuparse cada uno de reg
 - Las claves siguen siendo `G1`-`G6` y corresponden a las casillas `1`-`6` en ese orden.
 - `icono` es el código hexadecimal de un glifo de Segoe Fluent Icons. Cambiar un icono es editar cuatro caracteres.
 - `accion` es un nombre de archivo dentro de `actions\`. Vacío deja la casilla libre, y el overlay la dibuja atenuada.
+- `opciones` son los argumentos que recibe el script, en orden. Opcional; la mayoría de las acciones no lleva ninguno.
+- `estado` es el proveedor que dibuja la línea en vivo debajo del nombre. Opcional. Hoy existe `salida-audio`.
 - El archivo se relee cada vez que el panel se abre. No hace falta reiniciar nada.
 
 ### Comportamiento ante fallas
@@ -148,6 +151,7 @@ El envoltorio existe para que los scripts no tengan que ocuparse cada uno de reg
 | `accion` apunta a un script que no existe | Se registra en `atajos.log`. |
 | Casilla sin acción | No pasa nada, y no es un error. Se dibuja atenuada. |
 | Una tecla ausente del JSON | Se dibuja libre; no corre la grilla. |
+| `estado` desconocido, o el estado no se puede leer | La casilla se dibuja sin la línea en vivo y el resto del panel funciona. Se registra una vez por sesión en `atajos.log`, no en cada apertura. |
 
 Las acciones corren sin ventana. Un fallo sin registrar sería un fallo invisible, y por eso existe `atajos.log`.
 
@@ -230,9 +234,9 @@ Replican lo que ya existía en iCUE, en vez de inventar categorías nuevas.
 |------|-----|-----------|
 | Perfil 1 | no se replica | No hacía nada |
 | Perfil 2 | **General** | Las seis acciones de uso diario |
-| Perfil 3 | **Notas** | Sólo la nota diaria en la casilla 1; el resto libres |
+| Perfil 3 | **Notas** | Nota diaria (1) y Recordá (2); el resto libres |
 
-Si "Notas" con una sola casilla resulta que no se usa, se borran unos renglones del JSON y listo.
+Si alguna casilla de "Notas" resulta que no se usa, se borran unos renglones del JSON y listo.
 
 ## Stack
 
