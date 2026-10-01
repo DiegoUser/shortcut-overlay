@@ -12,3 +12,7 @@ atajos.log.1
 *.user
 Thumbs.db
 desktop.ini
+
+# Local AI tooling: per-machine state, not part of the project.
+.atl/
+.claude/
