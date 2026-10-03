@@ -1,34 +1,42 @@
-﻿# Starts LocalDrop, works out the LAN URL, and copies it to the clipboard.
+﻿# Checks that LocalDrop is up, works out the LAN URL, and copies it to the clipboard.
 #
-# Three things changed from the original. The executable path was hardcoded to one user's
-# profile, so it could never work on another machine; it now builds from $env:USERPROFILE and
-# says so when it is missing. The whole script ran under $ErrorActionPreference =
-# 'SilentlyContinue', which hid every failure including "the server never came up". And the
-# server-start timeout used to fall through silently into a dialog showing a URL that pointed
-# at nothing.
+# LocalDrop runs as the "LocalDrop" Windows service (deployed by LocalDrop's publish.cmd), so
+# this action no longer launches an executable of its own. It used to start a separate copy on
+# port 5000, which meant two installs, and the one behind this key silently fell behind every
+# publish. Starting a stopped service needs elevation, so the action says so instead of trying.
+# Failures still surface instead of falling through into a dialog with a URL that points at
+# nothing.
 
-$exe  = Join-Path $env:USERPROFILE 'Desktop\PublicarLocalDrop\LocalDrop.Api.exe'
-$port = 5000
+$serviceName = 'LocalDrop'
+$port        = 5001
 
-if (-not (Test-Path -LiteralPath $exe)) {
-    throw "LocalDrop not found at $exe"
+function Test-LocalDropHealthy {
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:$port/health" -UseBasicParsing -TimeoutSec 3
+        return $response.StatusCode -eq 200
+    }
+    catch {
+        return $false
+    }
 }
 
-function Test-PortListening {
-    [bool](Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)
-}
-
-if (-not (Test-PortListening)) {
-    Start-Process -FilePath $exe -WorkingDirectory (Split-Path $exe) -WindowStyle Hidden
-
-    $deadline = (Get-Date).AddSeconds(10)
-    while (-not (Test-PortListening) -and (Get-Date) -lt $deadline) {
-        Start-Sleep -Milliseconds 250
+if (-not (Test-LocalDropHealthy)) {
+    $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    $reason = if (-not $service) {
+        "the '$serviceName' Windows service is not installed"
+    }
+    elseif ($service.Status -ne 'Running') {
+        "the '$serviceName' service is $($service.Status); start it from services.msc (needs admin)"
+    }
+    else {
+        "the '$serviceName' service is running but nothing answers on port $port"
     }
 
-    if (-not (Test-PortListening)) {
-        throw "LocalDrop was started but nothing is listening on port $port after 10 s"
-    }
+    # The key press expects feedback, and the log alone would make it look like nothing happened.
+    Add-Type -AssemblyName System.Windows.Forms
+    [System.Windows.Forms.MessageBox]::Show("LocalDrop is not available: $reason.", 'LocalDrop',
+        'OK', 'Warning') | Out-Null
+    throw "LocalDrop is not available: $reason"
 }
 
 # The adapter that is up and has a default gateway is the one on the LAN. Without that

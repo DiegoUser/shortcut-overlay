@@ -58,7 +58,7 @@ Depende del perfil que tengas activo. El nombre del perfil se ve abajo del panel
 | **2** | Abre VS Code en la carpeta que tenés abierta en el Explorador |
 | **3** | Levanta el gateway de OpenClaw |
 | **4** | Abre una terminal en la carpeta que tenés abierta en el Explorador |
-| **5** | Levanta LocalDrop y te copia la dirección al portapapeles |
+| **5** | Comprueba que el servicio LocalDrop esté corriendo y te copia la dirección al portapapeles |
 | **6** | Arregla el monitor cuando queda en negro después de suspender |
 
 ### Perfil "Notas"
